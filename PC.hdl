@@ -1,0 +1,32 @@
+// PC.hdl
+// 16-bit Program Counter
+//
+// The Program Counter tracks which instruction the CPU should execute next.
+// On each clock cycle, it behaves as follows (priority order):
+//   1. If reset=1  -> output = 0         (jump to start)
+//   2. If load=1   -> output = in[16]    (jump to address in 'in')
+//   3. If inc=1    -> output = out + 1   (move to next instruction)
+//   4. Otherwise   -> output unchanged
+//
+// This priority ensures reset always wins, then explicit jumps, then increment.
+
+CHIP PC {
+    IN  in[16], load, inc, reset;
+    OUT out[16];
+
+    PARTS:
+    // Step 1: Increment current value
+    Inc16(in=currentOut, out=incOut);
+
+    // Step 2: Choose between current and incremented value
+    Mux16(a=currentOut, b=incOut, sel=inc, out=afterInc);
+
+    // Step 3: Choose between incremented and load value
+    Mux16(a=afterInc, b=in, sel=load, out=afterLoad);
+
+    // Step 4: Choose between loaded and reset (zero) value
+    Mux16(a=afterLoad, b=false, sel=reset, out=nextVal);
+
+    // Step 5: Store the result in a register, always loading
+    Register(in=nextVal, load=true, out=currentOut, out=out);
+}

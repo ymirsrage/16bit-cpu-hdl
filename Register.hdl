@@ -1,0 +1,66 @@
+// Register.hdl
+// 16-bit Register
+//
+// A clocked storage element. On each clock cycle:
+//   - If load=1, the register stores the input value (in[16])
+//   - If load=0, the register holds its current value
+//
+// The output (out[16]) always reflects the currently stored value.
+//
+// Built from 16 individual 1-bit DFF (Data Flip-Flop) units,
+// each controlled by a Mux that decides whether to load new data.
+
+CHIP Register {
+    IN  in[16], load;
+    OUT out[16];
+
+    PARTS:
+    // For each bit: if load=1, store new input; else keep current value
+    Mux(a=out0, b=in[0],  sel=load, out=d0);
+    DFF(in=d0, out=out0, out=out[0]);
+
+    Mux(a=out1, b=in[1],  sel=load, out=d1);
+    DFF(in=d1, out=out1, out=out[1]);
+
+    Mux(a=out2, b=in[2],  sel=load, out=d2);
+    DFF(in=d2, out=out2, out=out[2]);
+
+    Mux(a=out3, b=in[3],  sel=load, out=d3);
+    DFF(in=d3, out=out3, out=out[3]);
+
+    Mux(a=out4, b=in[4],  sel=load, out=d4);
+    DFF(in=d4, out=out4, out=out[4]);
+
+    Mux(a=out5, b=in[5],  sel=load, out=d5);
+    DFF(in=d5, out=out5, out=out[5]);
+
+    Mux(a=out6, b=in[6],  sel=load, out=d6);
+    DFF(in=d6, out=out6, out=out[6]);
+
+    Mux(a=out7, b=in[7],  sel=load, out=d7);
+    DFF(in=d7, out=out7, out=out[7]);
+
+    Mux(a=out8, b=in[8],  sel=load, out=d8);
+    DFF(in=d8, out=out8, out=out[8]);
+
+    Mux(a=out9, b=in[9],  sel=load, out=d9);
+    DFF(in=d9, out=out9, out=out[9]);
+
+    Mux(a=out10, b=in[10], sel=load, out=d10);
+    DFF(in=d10, out=out10, out=out[10]);
+
+    Mux(a=out11, b=in[11], sel=load, out=d11);
+    DFF(in=d11, out=out11, out=out[11]);
+
+    Mux(a=out12, b=in[12], sel=load, out=d12);
+    DFF(in=d12, out=out12, out=out[12]);
+
+    Mux(a=out13, b=in[13], sel=load, out=d13);
+    DFF(in=d13, out=out13, out=out[13]);
+
+    Mux(a=out14, b=in[14], sel=load, out=d14);
+    DFF(in=d14, out=out14, out=out[14]);
+
+    Mux(a=out15, b=in[15], sel=load, out=d15);
+    DFF(in=d15, out=out15, out=out[15]);
+}

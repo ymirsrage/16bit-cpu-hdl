@@ -1,0 +1,63 @@
+// ALU.hdl
+// 16-bit Arithmetic Logic Unit (ALU)
+// Inspired by the Nand2Tetris ALU design.
+//
+// INPUTS:
+//   x[16], y[16]  - Two 16-bit data inputs
+//   zx            - Zero the x input
+//   nx            - Negate the x input
+//   zy            - Zero the y input
+//   ny            - Negate the y input
+//   f             - Function select: 1=Add, 0=And
+//   no            - Negate the output
+//
+// OUTPUTS:
+//   out[16]       - 16-bit result
+//   zr            - 1 if out == 0
+//   ng            - 1 if out < 0 (MSB is 1)
+
+CHIP ALU {
+    IN
+        x[16], y[16],
+        zx, nx,
+        zy, ny,
+        f, no;
+
+    OUT
+        out[16],
+        zr,
+        ng;
+
+    PARTS:
+    // --- Pre-process x ---
+    // If zx=1, zero out x
+    Mux16(a=x, b=false, sel=zx, out=x1);
+    // If nx=1, negate x
+    Not16(in=x1, out=notX1);
+    Mux16(a=x1, b=notX1, sel=nx, out=x2);
+
+    // --- Pre-process y ---
+    // If zy=1, zero out y
+    Mux16(a=y, b=false, sel=zy, out=y1);
+    // If ny=1, negate y
+    Not16(in=y1, out=notY1);
+    Mux16(a=y1, b=notY1, sel=ny, out=y2);
+
+    // --- Function select ---
+    // f=1: Add(x2, y2), f=0: And(x2, y2)
+    Add16(a=x2, b=y2, out=addOut);
+    And16(a=x2, b=y2, out=andOut);
+    Mux16(a=andOut, b=addOut, sel=f, out=fOut);
+
+    // --- Post-process output ---
+    // If no=1, negate the result
+    Not16(in=fOut, out=notFOut);
+    Mux16(a=fOut, b=notFOut, sel=no, out=out, out[0..7]=low8, out[8..15]=high8, out[15]=ng);
+
+    // --- Zero flag ---
+    // zr=1 if all output bits are 0
+    Or8Way(in=low8, out=orLow);
+    Or8Way(in=high8, out=orHigh);
+    Or(a=orLow, b=orHigh, out=anyBit);
+    Not(in=anyBit, out=zr);
+}

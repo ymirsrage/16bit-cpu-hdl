@@ -1,0 +1,47 @@
+// Computer.hdl
+// Top-Level: Complete 16-bit Computer
+//
+// This is the top-level chip that connects all components:
+//   - CPU: Fetches and executes instructions
+//   - ROM32K: Instruction memory (program storage)
+//   - Memory: Data memory (RAM + I/O)
+//
+// On reset=1, the CPU resets and begins execution from address 0.
+// On reset=0, the CPU runs the loaded program continuously.
+//
+// This represents a complete von Neumann architecture:
+// the CPU fetches instructions from ROM, operates on data in RAM,
+// and communicates with I/O devices through the memory map.
+
+CHIP Computer {
+    IN reset;
+
+    PARTS:
+    // --- Instruction Memory (ROM) ---
+    // CPU provides the program counter (pc) as address
+    // ROM outputs the current instruction to the CPU
+    ROM32K(address=pc, out=instruction);
+
+    // --- CPU ---
+    // Fetches instruction from ROM, executes it
+    // Outputs: data for memory, write signal, memory address, next PC
+    CPU(
+        inM=memOut,
+        instruction=instruction,
+        reset=reset,
+        outM=cpuOut,
+        writeM=writeM,
+        addressM=addressM,
+        pc=pc
+    );
+
+    // --- Data Memory ---
+    // CPU can read from and write to memory
+    // Address and data come from the CPU
+    Memory(
+        in=cpuOut,
+        load=writeM,
+        address=addressM,
+        out=memOut
+    );
+}

@@ -1,0 +1,93 @@
+// CPU.hdl
+// 16-bit CPU - Main Control Unit
+//
+// The CPU fetches and executes instructions from memory.
+// It contains:
+//   - A-register (address/data register)
+//   - D-register (data register)
+//   - ALU (performs computations)
+//   - Program Counter (tracks next instruction)
+//
+// INSTRUCTION FORMAT:
+//   A-instruction (MSB=0): Load 15-bit value into A-register
+//   C-instruction (MSB=1): Compute, store result, and optionally jump
+//     Bits: 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
+//     - a:       ALU uses A-register (0) or Memory (1)
+//     - c1-c6:   ALU control bits
+//     - d1-d3:   Destination: A, D, Memory
+//     - j1-j3:   Jump conditions: ng, zr, positive
+
+CHIP CPU {
+    IN
+        inM[16],        // Data input from Memory
+        instruction[16],// Current instruction
+        reset;          // Reset signal
+
+    OUT
+        outM[16],       // Data output to Memory
+        writeM,         // Write to Memory flag
+        addressM[15],   // Memory address
+        pc[15];         // Next instruction address (Program Counter)
+
+    PARTS:
+    // --- Decode instruction type ---
+    // instruction[15]=0 -> A-instruction, =1 -> C-instruction
+    Not(in=instruction[15], out=isAInstruction);
+    And(a=instruction[15], b=instruction[15], out=isCInstruction);
+
+    // --- A-Register ---
+    // Load A if: A-instruction OR C-instruction with d1=1
+    And(a=isCInstruction, b=instruction[5], out=cLoadsA);
+    Or(a=isAInstruction, b=cLoadsA, out=loadA);
+    // A-instruction loads the instruction value; C-instruction loads ALU output
+    Mux16(a=instruction, b=aluOut, sel=isCInstruction, out=aIn);
+    Register(in=aIn, load=loadA, out=aOut, out[0..14]=addressM);
+
+    // --- D-Register ---
+    // Load D if: C-instruction with d2=1
+    And(a=isCInstruction, b=instruction[4], out=loadD);
+    Register(in=aluOut, load=loadD, out=dOut);
+
+    // --- ALU input select ---
+    // a-bit (instruction[12]): 0=use A-register, 1=use Memory
+    Mux16(a=aOut, b=inM, sel=instruction[12], out=aluY);
+
+    // --- ALU ---
+    ALU(
+        x=dOut,
+        y=aluY,
+        zx=instruction[11],
+        nx=instruction[10],
+        zy=instruction[9],
+        ny=instruction[8],
+        f=instruction[7],
+        no=instruction[6],
+        out=aluOut,
+        out=outM,
+        zr=zrOut,
+        ng=ngOut
+    );
+
+    // --- Write to Memory ---
+    // writeM=1 if C-instruction and d3=1
+    And(a=isCInstruction, b=instruction[3], out=writeM);
+
+    // --- Jump Logic ---
+    // j1=instruction[2]: jump if negative (ng=1)
+    // j2=instruction[1]: jump if zero (zr=1)
+    // j3=instruction[0]: jump if positive (ng=0 and zr=0)
+    Not(in=ngOut, out=notNg);
+    Not(in=zrOut, out=notZr);
+    And(a=notNg, b=notZr, out=isPositive);
+
+    And(a=instruction[2], b=ngOut,     out=jumpNeg);
+    And(a=instruction[1], b=zrOut,     out=jumpZero);
+    And(a=instruction[0], b=isPositive, out=jumpPos);
+
+    Or(a=jumpNeg, b=jumpZero, out=jump1);
+    Or(a=jump1,   b=jumpPos,  out=jumpCondition);
+    And(a=isCInstruction, b=jumpCondition, out=doJump);
+
+    // --- Program Counter ---
+    PC(in=aOut, load=doJump, inc=true, reset=reset, out[0..14]=pc);
+}
