@@ -162,7 +162,7 @@ Top-level chip connecting CPU, ROM (instruction memory), and Memory (data memory
 
 - Nisan, N. & Schocken, S. — *The Elements of Computing Systems* (Nand2Tetris)
 - Patterson & Hennessy — *Computer Organization and Design*
-
+- Project implementation assisted with AI tooling. Architecture and concepts based on the Nand2Tetris curriculum (Nisan & Schocken).
 ---
 
 *Developed by Michael Kalu — Electrical Engineering Student, Grambling State University*
